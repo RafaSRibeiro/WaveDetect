@@ -1,0 +1,11 @@
+version: "3"
+services:
+  datascience-notebook:
+    container_name: datascience-notebook-container
+    build:
+      dockerfile: docker/Dockerfile
+      context: .
+    volumes:
+      - ./work:/home/jovyan/work
+    ports:
+      - "8888:8888"
