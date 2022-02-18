@@ -1,0 +1,9 @@
+version: "3"
+services:
+  python:
+    build:
+      dockerfile: docker/Dockerfile
+      context: .
+    working_dir: /home
+    volumes:
+      - ./src:/home
