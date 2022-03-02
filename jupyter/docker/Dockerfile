@@ -1,4 +1,4 @@
 FROM jupyter/datascience-notebook
 
 RUN pip install --upgrade pip \
-    && pip install tensorflow
+    && pip install tensorflow-cpu

@@ -1,47 +1,43 @@
 import os
 import pathlib
-from plot import get_wavform
-from pathlib import Path
-import matplotlib.pyplot as plt
+import sys
+
 import numpy as np
+import matplotlib.pyplot as plt
+from pydub import AudioSegment
 
 import tensorflow as tf
 
-model = tf.keras.models.load_model('../../jupyter/work/model')
+model = tf.keras.models.load_model('../../jupyter/work/model2')
 
-sample_files = ['./test/noise.wav', './test/kick.wav', './test/snare.wav']
+sample_files = ['./test/noise.wav', './test/kick.wav', './test/snare.wav', './file.wav', './test/snare2.wav',
+                './test/temp.wav']
 
-sample_size = 1500
 data_dir = pathlib.Path('../../jupyter/work/dataset/mono')
 commands = np.array(tf.io.gfile.listdir(str(data_dir)))
-AUTOTUNE = tf.data.AUTOTUNE
-
 
 def get_spectrogram(waveform):
-    # Padding for files with less than 3000 samples
-    if [sample_size] - tf.shape(waveform) > 0:
-        zero_padding = tf.zeros([sample_size] - tf.shape(waveform), dtype=tf.float32)
-    else:
-        zero_padding = tf.zeros(0, dtype=tf.float32)
-
-    waveform = tf.cast(waveform, tf.float32)
-    equal_length = tf.concat([waveform[0:sample_size], zero_padding], 0)
-    spectrogram = tf.signal.stft(equal_length, frame_length=255, frame_step=128)
+    # Zero-padding for an audio waveform with less than 16,000 samples.
+    input_len = 1600
+    waveform = waveform[:input_len]
+    zero_padding = tf.zeros(
+        [1600] - tf.shape(waveform),
+        dtype=tf.float32)
+    # Cast the waveform tensors' dtype to float32.
+    waveform = tf.cast(waveform, dtype=tf.float32)
+    # Concatenate the waveform with `zero_padding`, which ensures all audio
+    # clips are of the same length.
+    equal_length = tf.concat([waveform, zero_padding], 0)
+    # Convert the waveform to a spectrogram via a STFT.
+    spectrogram = tf.signal.stft(
+        equal_length, frame_length=255, frame_step=128)
+    # Obtain the magnitude of the STFT.
     spectrogram = tf.abs(spectrogram)
-
+    # Add a `channels` dimension, so that the spectrogram can be used
+    # as image-like input data with convolution layers (which expect
+    # shape (`batch_size`, `height`, `width`, `channels`).
+    spectrogram = spectrogram[..., tf.newaxis]
     return spectrogram
-
-
-def plot_spectrogram(spectrogram, ax):
-    # Convert to frequencies to log scale and transpose so that the time is
-    # represented in the x-axis (columns).
-    log_spec = np.log(spectrogram.T)
-    height = log_spec.shape[0]
-    width = log_spec.shape[1]
-    X = np.linspace(0, np.size(spectrogram), num=width, dtype=int)
-    Y = range(height)
-    ax.pcolormesh(X, Y, log_spec)
-    ax.axis('off')
 
 
 def decode_audio(audio_binary):
@@ -63,25 +59,34 @@ def get_waveform_and_label(file_path):
 
 def get_spectrogram_and_label_id(audio, label):
     spectrogram = get_spectrogram(audio)
-    spectrogram = tf.expand_dims(spectrogram, -1)
     label_id = tf.argmax(label == commands)
     return spectrogram, label_id
 
 
 def preprocess_dataset(files):
     files_ds = tf.data.Dataset.from_tensor_slices(files)
-    output_ds = files_ds.map(get_waveform_and_label, num_parallel_calls=AUTOTUNE)
-    output_ds = output_ds.map(get_spectrogram_and_label_id, num_parallel_calls=AUTOTUNE)
-    return output_ds
+    output_ds = files_ds.map(get_waveform_and_label, num_parallel_calls=tf.data.AUTOTUNE)
+    return output_ds.map(get_spectrogram_and_label_id, num_parallel_calls=tf.data.AUTOTUNE)
 
 
-for sample_file in sample_files:
-    waveform = get_wavform(sample_file)
-    spectrogram = get_spectrogram(waveform)
+def predict(file):
+    # audio_file = file
+    # split_audio = AudioSegment.from_wav(audio_file)
+    # split_audio = split_audio[0:100]
+    # split_audio_file = 'temp.wav'
+    # split_audio.export(split_audio_file, format="wav")
+    # stereo_audio = AudioSegment.from_file(split_audio_file, format="wav")
+    # stereo_audio = stereo_audio.set_frame_rate(16000)
+    # mono_audios = stereo_audio.split_to_mono()
+    # mono_audios[0].export('temp.wav', format="wav")
 
-    sample_ds = preprocess_dataset([str(sample_file)])
+    sample_ds = preprocess_dataset([str(file)])
     for spectrogram, label in sample_ds.batch(1):
-      prediction = model.predict(spectrogram)
-      print(commands[prediction.argmax(axis=1)[0]])
-      # plt.bar(commands, tf.nn.softmax(prediction[0]))
-      # plt.show()
+        prediction = model.predict(spectrogram)
+        print(commands[prediction.argmax(axis=1)[0]])
+        # plt.bar(commands, tf.nn.softmax(prediction[0]))
+        # plt.title(f'Predictions for "{commands[label[0]]}"')
+        # plt.show()
+
+
+# predict(sample_files[3])
