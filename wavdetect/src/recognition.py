@@ -83,7 +83,7 @@ def predict(file):
     sample_ds = preprocess_dataset([str(file)])
     for spectrogram, label in sample_ds.batch(1):
         prediction = model.predict(spectrogram)
-        print(commands[prediction.argmax(axis=1)[0]])
+        return commands[prediction.argmax(axis=1)[0]]
         # plt.bar(commands, tf.nn.softmax(prediction[0]))
         # plt.title(f'Predictions for "{commands[label[0]]}"')
         # plt.show()
