@@ -16,6 +16,7 @@ sample_files = ['./test/noise.wav', './test/kick.wav', './test/snare.wav', './fi
 data_dir = pathlib.Path('../../jupyter/work/dataset/mono')
 commands = np.array(tf.io.gfile.listdir(str(data_dir)))
 
+
 def get_spectrogram(waveform):
     # Zero-padding for an audio waveform with less than 16,000 samples.
     input_len = 1600
@@ -30,7 +31,7 @@ def get_spectrogram(waveform):
     equal_length = tf.concat([waveform, zero_padding], 0)
     # Convert the waveform to a spectrogram via a STFT.
     spectrogram = tf.signal.stft(
-        equal_length, frame_length=255, frame_step=128)
+        equal_length, frame_length=255, frame_step=32)
     # Obtain the magnitude of the STFT.
     spectrogram = tf.abs(spectrogram)
     # Add a `channels` dimension, so that the spectrogram can be used
@@ -87,6 +88,5 @@ def predict(file):
         # plt.bar(commands, tf.nn.softmax(prediction[0]))
         # plt.title(f'Predictions for "{commands[label[0]]}"')
         # plt.show()
-
 
 # predict(sample_files[3])

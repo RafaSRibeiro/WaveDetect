@@ -12,7 +12,7 @@ paths = os.listdir(base_dir)
 
 
 def match_target_amplitude(sound, target_dBFS):
-    change_in_dBFS = target_dBFS - sound.dBFS
+    change_in_dBFS = target_dBFS - sound.max_dBFS
     return sound.apply_gain(change_in_dBFS)
 
 
