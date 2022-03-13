@@ -30,7 +30,7 @@ for path in paths:
     for file in files:
         audio_file = base_dir + path + "/" + file
         split_audio = AudioSegment.from_wav(audio_file)
-        split_audio = split_audio[0:100]
+        split_audio = split_audio[0:200]
         split_audio_file = export_mono_split_path + "/" + file
         split_audio.export(split_audio_file, format="wav")
 
