@@ -3,7 +3,7 @@ import recognition
 from pydub import AudioSegment
 from pydub.utils import make_chunks
 
-file_name = './test/clipe5.wav'
+file_name = './test/clipe7.wav'
 
 source_snare = AudioSegment.from_wav("./source/snare2.wav")
 source_kick = AudioSegment.from_wav("./source/kick2.wav")
@@ -29,6 +29,10 @@ output_kick = AudioSegment(data=b''.join([]), sample_width=2, frame_rate=44100, 
 output_kick_positions = []
 output_kick += AudioSegment.silent(len(audio))
 
+output_kicksnare = AudioSegment(data=b''.join([]), sample_width=2, frame_rate=44100, channels=2)
+output_kicksnare_positions = []
+output_kicksnare += AudioSegment.silent(len(audio))
+
 output_master = AudioSegment(data=b''.join([]), sample_width=2, frame_rate=44100, channels=2)
 output_master += AudioSegment.silent(len(audio))
 
@@ -53,6 +57,8 @@ for i, chunk in enumerate(chunks):
                 output_snare_positions.append(current_temporary_raw_sample_time)
             if prediction == 'kick':
                 output_kick_positions.append(current_temporary_raw_sample_time)
+            if prediction == 'kicksnare':
+                output_kicksnare_positions.append(current_temporary_raw_sample_time)
             temporary_raw_sample = []
             threshold_trigger = False
 
@@ -63,6 +69,12 @@ for position in output_kick_positions:
 for position in output_snare_positions:
     output_snare = output_snare.overlay(source_snare, position=position)
     output_master = output_master.overlay(source_snare, position=position)
+
+for position in output_kicksnare_positions:
+    output_kicksnare = output_kicksnare.overlay(source_snare, position=position)
+    output_kicksnare = output_kicksnare.overlay(source_kick, position=position)
+    output_master = output_master.overlay(source_snare, position=position)
+    output_master = output_master.overlay(source_kick, position=position)
 
 output_snare.export('./output/snare.wav', format='wav')
 output_kick.export('./output/kick.wav', format='wav')

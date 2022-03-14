@@ -8,7 +8,7 @@ from pydub import AudioSegment
 
 import tensorflow as tf
 
-model = tf.keras.models.load_model('../../jupyter/work/model2')
+model = tf.keras.models.load_model('../../jupyter/work/model3')
 
 sample_files = ['./test/noise.wav', './test/kick.wav', './test/snare.wav', './file.wav', './test/snare2.wav',
                 './test/temp.wav']
