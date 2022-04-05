@@ -1,17 +1,11 @@
 import os
 import pathlib
-import sys
 
 import numpy as np
-import matplotlib.pyplot as plt
-from pydub import AudioSegment
 
 import tensorflow as tf
 
-model = tf.keras.models.load_model('../../jupyter/work/model3')
-
-sample_files = ['./test/noise.wav', './test/kick.wav', './test/snare.wav', './file.wav', './test/snare2.wav',
-                './test/temp.wav']
+model = tf.keras.models.load_model('../../jupyter/work/model50ms')
 
 data_dir = pathlib.Path('../../jupyter/work/dataset/mono')
 commands = np.array(tf.io.gfile.listdir(str(data_dir)))
@@ -19,10 +13,10 @@ commands = np.array(tf.io.gfile.listdir(str(data_dir)))
 
 def get_spectrogram(waveform):
     # Zero-padding for an audio waveform with less than 16,000 samples.
-    input_len = 1600
+    input_len = 800
     waveform = waveform[:input_len]
     zero_padding = tf.zeros(
-        [1600] - tf.shape(waveform),
+        [input_len] - tf.shape(waveform),
         dtype=tf.float32)
     # Cast the waveform tensors' dtype to float32.
     waveform = tf.cast(waveform, dtype=tf.float32)
@@ -31,7 +25,7 @@ def get_spectrogram(waveform):
     equal_length = tf.concat([waveform, zero_padding], 0)
     # Convert the waveform to a spectrogram via a STFT.
     spectrogram = tf.signal.stft(
-        equal_length, frame_length=255, frame_step=32)
+        equal_length, frame_length=255, frame_step=8)
     # Obtain the magnitude of the STFT.
     spectrogram = tf.abs(spectrogram)
     # Add a `channels` dimension, so that the spectrogram can be used
@@ -71,22 +65,7 @@ def preprocess_dataset(files):
 
 
 def predict(file):
-    # audio_file = file
-    # split_audio = AudioSegment.from_wav(audio_file)
-    # split_audio = split_audio[0:100]
-    # split_audio_file = 'temp.wav'
-    # split_audio.export(split_audio_file, format="wav")
-    # stereo_audio = AudioSegment.from_file(split_audio_file, format="wav")
-    # stereo_audio = stereo_audio.set_frame_rate(16000)
-    # mono_audios = stereo_audio.split_to_mono()
-    # mono_audios[0].export('temp.wav', format="wav")
-
     sample_ds = preprocess_dataset([str(file)])
     for spectrogram, label in sample_ds.batch(1):
         prediction = model.predict(spectrogram)
         return commands[prediction.argmax(axis=1)[0]]
-        # plt.bar(commands, tf.nn.softmax(prediction[0]))
-        # plt.title(f'Predictions for "{commands[label[0]]}"')
-        # plt.show()
-
-# predict(sample_files[3])
