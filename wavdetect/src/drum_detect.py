@@ -1,8 +1,24 @@
+
+import os
+import argparse
 import recognition
 from pydub import AudioSegment
 from pydub.utils import make_chunks
+import normalize
 
-file_name = './test/clipe5.wav'
+parser = argparse.ArgumentParser(description="Drum Detect", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("-c", "--chunk-length-ms", help="chunk length in ms", default=10)
+parser.add_argument("-t", "--threshold", help="threshold in db", default=-6)
+parser.add_argument("-d", "--decay", help="decay in ms", default=0)
+parser.add_argument("src", help="Input audio file")
+parser.add_argument("output_path", help="Destination export", default="output")
+args = parser.parse_args()
+
+file_name = args.src
+output_path = args.output_path
+chunk_length_ms = int(args.chunk_length_ms)
+threshold = float(args.threshold)
+decay = float(args.decay)
 
 source_snare = AudioSegment.from_wav("./source/snare2.wav")
 source_kick = AudioSegment.from_wav("./source/kick2.wav")
@@ -12,7 +28,7 @@ audio = audio.set_frame_rate(16000)
 audio = audio.set_sample_width(2)
 audio = audio.split_to_mono()
 audio = audio[0]
-chunk_length_ms = 10  # pydub calculates in millisecond
+audio = normalize.normalize(audio, 0)
 chunks = make_chunks(audio, chunk_length_ms)  # Make chunks of one sec
 
 threshold_trigger = False
@@ -28,14 +44,14 @@ for i, chunk in enumerate(chunks):
     current_time += chunk_length_ms
     raw_audio_data = chunk.raw_data
     sound = AudioSegment(data=b''.join([raw_audio_data]), sample_width=2, frame_rate=16000, channels=1)
-    if sound.max_dBFS > -6:
+    if sound.max_dBFS > threshold:
         threshold_trigger = True
 
     if threshold_trigger:
         if not temporary_raw_sample:
             current_temporary_raw_sample_time = current_time
         temporary_raw_sample.append(raw_audio_data)
-        if len(temporary_raw_sample) >= 5:
+        if len(temporary_raw_sample) >= 15:
             temporary_sound = AudioSegment(data=b''.join(temporary_raw_sample), sample_width=2, frame_rate=16000,
                                            channels=1)
             temp_filename = './temp.wav'
@@ -59,7 +75,7 @@ if len(output_snare_positions) > 0:
     for position in output_snare_positions:
         output_snare = output_snare.overlay(source_snare, position=position)
         output_master = output_master.overlay(source_snare, position=position)
-    output_snare.export('./output/snare.wav', format='wav')
+    output_snare.export(os.path.join('./', output_path, 'snare.wav'), format='wav')
 
 if len(output_kick_positions) > 0:
     output_kick = AudioSegment(data=b''.join([]), sample_width=2, frame_rate=44100, channels=2)
@@ -67,7 +83,7 @@ if len(output_kick_positions) > 0:
     for position in output_kick_positions:
         output_kick = output_kick.overlay(source_kick, position=position)
         output_master = output_master.overlay(source_kick, position=position)
-    output_kick.export('./output/kick.wav', format='wav')
+    output_kick.export(os.path.join('./', output_path, 'kick.wav'), format='wav')
 
 if len(output_kicksnare_positions) > 0:
     output_kicksnare = AudioSegment(data=b''.join([]), sample_width=2, frame_rate=44100, channels=2)
@@ -77,7 +93,7 @@ if len(output_kicksnare_positions) > 0:
         output_kicksnare = output_kicksnare.overlay(source_kick, position=position)
         output_master = output_master.overlay(source_snare, position=position)
         output_master = output_master.overlay(source_kick, position=position)
-    output_kicksnare.export('./output/kicksnare.wav', format='wav')
+    output_kicksnare.export(os.path.join('./', output_path, 'kicksnare.wav'), format='wav')
 
 
 output_master.export('./output/master.wav', format='wav')

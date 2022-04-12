@@ -5,32 +5,31 @@ import numpy as np
 
 import tensorflow as tf
 
-model = tf.keras.models.load_model('../../jupyter/work/model50ms')
+audio_length_ms = 150
+model = tf.keras.models.load_model('../../jupyter/work/model' + str(audio_length_ms) + 'ms')
 
-data_dir = pathlib.Path('../../jupyter/work/dataset/mono')
-commands = np.array(tf.io.gfile.listdir(str(data_dir)))
+commands = np.array(['kick', 'noise', 'snare', 'kicksnare'])
+
+sample_len = int(audio_length_ms / 50) * 800
 
 
 def get_spectrogram(waveform):
-    # Zero-padding for an audio waveform with less than 16,000 samples.
-    input_len = 800
+    # Zero-padding para uma forma de onda de áudio com menos de 16.000 amostras.
+    input_len = sample_len
     waveform = waveform[:input_len]
-    zero_padding = tf.zeros(
-        [input_len] - tf.shape(waveform),
-        dtype=tf.float32)
-    # Cast the waveform tensors' dtype to float32.
+    zero_padding = tf.zeros([input_len] - tf.shape(waveform), dtype=tf.float32)
+    # Transmita o dtype dos tensores de forma de onda para float32.
     waveform = tf.cast(waveform, dtype=tf.float32)
-    # Concatenate the waveform with `zero_padding`, which ensures all audio
-    # clips are of the same length.
+    # Concatene a forma de onda com `zero_padding`, o que garante que todos os
+    # clipes de áudio tenham a mesma duração.
     equal_length = tf.concat([waveform, zero_padding], 0)
-    # Convert the waveform to a spectrogram via a STFT.
-    spectrogram = tf.signal.stft(
-        equal_length, frame_length=255, frame_step=8)
-    # Obtain the magnitude of the STFT.
+    # Converta a forma de onda em um espectrograma por meio de um STFT.
+    spectrogram = tf.signal.stft(equal_length, frame_length=255, frame_step=16)
+    # Obtenha a magnitude do STFT.
     spectrogram = tf.abs(spectrogram)
-    # Add a `channels` dimension, so that the spectrogram can be used
-    # as image-like input data with convolution layers (which expect
-    # shape (`batch_size`, `height`, `width`, `channels`).
+    # Adicione uma dimensão `channels`, para que o espectrograma possa ser usado como
+    # dados de entrada semelhantes a imagens com camadas de convolução
+    # (que esperam forma (`batch_size`, `height`, `width`, `channels`).
     spectrogram = spectrogram[..., tf.newaxis]
     return spectrogram
 

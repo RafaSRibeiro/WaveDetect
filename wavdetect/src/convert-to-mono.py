@@ -6,10 +6,10 @@ base_dir = '../../jupyter/work/dataset/learning/'
 
 paths = os.listdir(base_dir)
 
-audio_length_ms = 200
+audio_length_ms = 150
 
 for path in paths:
-    export_mono_path = os.path.join("./mono200ms", path)
+    export_mono_path = os.path.join("./mono150ms", path)
     os.makedirs(export_mono_path, exist_ok=True)
 
     files = os.listdir(base_dir + path)
