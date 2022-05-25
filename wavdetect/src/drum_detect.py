@@ -1,7 +1,7 @@
 
 import os
 import argparse
-import recognition
+from recognition import Recognition
 from pydub import AudioSegment
 from pydub.utils import make_chunks
 import normalize
@@ -9,7 +9,6 @@ import normalize
 parser = argparse.ArgumentParser(description="Drum Detect", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-c", "--chunk-length-ms", help="chunk length in ms", default=10)
 parser.add_argument("-t", "--threshold", help="threshold in db", default=-6)
-parser.add_argument("-d", "--decay", help="decay in ms", default=0)
 parser.add_argument("src", help="Input audio file")
 parser.add_argument("output_path", help="Destination export", default="output")
 args = parser.parse_args()
@@ -18,7 +17,7 @@ file_name = args.src
 output_path = args.output_path
 chunk_length_ms = int(args.chunk_length_ms)
 threshold = float(args.threshold)
-decay = float(args.decay)
+recognition = Recognition(100)
 
 source_snare = AudioSegment.from_wav("./source/snare2.wav")
 source_kick = AudioSegment.from_wav("./source/kick2.wav")
@@ -51,7 +50,7 @@ for i, chunk in enumerate(chunks):
         if not temporary_raw_sample:
             current_temporary_raw_sample_time = current_time
         temporary_raw_sample.append(raw_audio_data)
-        if len(temporary_raw_sample) >= 15:
+        if len(temporary_raw_sample) >= 10:
             temporary_sound = AudioSegment(data=b''.join(temporary_raw_sample), sample_width=2, frame_rate=16000,
                                            channels=1)
             temp_filename = './temp.wav'
@@ -97,3 +96,4 @@ if len(output_kicksnare_positions) > 0:
 
 
 output_master.export('./output/master.wav', format='wav')
+print("Success")
