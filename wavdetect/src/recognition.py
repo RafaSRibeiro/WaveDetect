@@ -24,7 +24,7 @@ class Recognition(object):
 
     def __init__(self, audio_length_ms=100):
         self.audio_length_ms = audio_length_ms
-        self.model = tf.keras.models.load_model('../../jupyter/work/model' + str(self.audio_length_ms) + 'ms')
+        self.model = tf.keras.models.load_model('../../jupyter/work/models/model' + str(self.audio_length_ms) + 'ms')
         self.commands = np.array(['kick', 'noise', 'snare', 'kicksnare'])
         self.sample_len = int(audio_length_ms / 50) * 800
 
