@@ -39,7 +39,7 @@ class Recognition(object):
         # clipes de áudio tenham a mesma duração.
         equal_length = tf.concat([waveform, zero_padding], 0)
         # Converta a forma de onda em um espectrograma por meio de um STFT.
-        spectrogram = tf.signal.stft(equal_length, frame_length=128, frame_step=64)
+        spectrogram = tf.signal.stft(equal_length, frame_length=50, frame_step=16)
         # Obtenha a magnitude do STFT.
         spectrogram = tf.abs(spectrogram)
         # Adicione uma dimensão `channels`, para que o espectrograma possa ser usado como
