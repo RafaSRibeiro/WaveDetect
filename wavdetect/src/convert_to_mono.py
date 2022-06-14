@@ -3,10 +3,9 @@ from pydub import AudioSegment
 from remove_silence import remove_initial_silence
 
 base_dir = '../../jupyter/work/dataset/learning/'
-
 paths = os.listdir(base_dir)
 
-audio_length_ms = 100
+audio_length_ms = 50
 
 for path in paths:
     export_mono_path = os.path.join("./mono"+str(audio_length_ms)+"ms", path)

@@ -11,7 +11,7 @@ def detect_leading_silence(sound, silence_threshold=-50.0, chunk_size=10):
     return trim_ms
 
 
-def remove_initial_silence(sound, silence_threshold=-40):
+def remove_initial_silence(sound, silence_threshold=-30):
     start_trim = detect_leading_silence(sound, silence_threshold)
     return sound[start_trim:]
 
